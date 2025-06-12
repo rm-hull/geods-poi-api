@@ -124,12 +124,20 @@ func search(c *gin.Context) {
 
 	// In bbox: [LEFT, BOTTOM, RIGHT, TOP]
 	// So: bbox[LEFT]=min long, bbox[BOTTOM]=min lat, bbox[RIGHT]=max long, bbox[TOP]=max lat
-	rows, err := db.Query(
-		"SELECT * FROM poi_uk WHERE lat BETWEEN ? AND ? AND long BETWEEN ? AND ?",
+	rows, err := db.Query(`
+		SELECT
+		  fid, geom, id, primary_name, main_category, alternate_category,
+		  address, locality, postcode, region, country, source, source_record_id,
+		  lat, long, h3_15, easting, northing, lsoa21cd
+		FROM poi_uk
+		WHERE lat BETWEEN ? AND ?
+		AND long BETWEEN ? AND ?
+		`,
 		bbox[BOTTOM], bbox[TOP], bbox[LEFT], bbox[RIGHT],
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("error querying database: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 		return
 	}
 	defer func() {
@@ -149,13 +157,15 @@ func search(c *gin.Context) {
 			&poi.Address, &poi.Locality, &poi.Postcode, &poi.Region, &poi.Country, &poi.Source, &poi.SourceRecordId,
 			&poi.Lat, &poi.Long, &poi.H3_15, &poi.Easting, &poi.Northing, &poi.LSOA21CD); err != nil {
 
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Printf("error scanning row: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
 
 		poi.Geom, err = wkbPointToWKT(geomBytes)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Printf("error converting WKB to WKT: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
 
@@ -164,12 +174,17 @@ func search(c *gin.Context) {
 			poi.Categories = append(poi.Categories, mainCategory.String)
 		}
 		if alternateCategory.Valid {
-			for _, cat := range strings.Split(alternateCategory.String, "|") {
+			for cat := range strings.SplitSeq(alternateCategory.String, "|") {
 				poi.Categories = append(poi.Categories, strings.TrimSpace(cat))
 			}
 		}
 
 		results = append(results, poi)
+	}
+	if err = rows.Err(); err != nil {
+		log.Printf("error during rows iteration: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
+		return
 	}
 
 	c.JSON(http.StatusOK, Response{Results: results})
@@ -185,7 +200,7 @@ func parseBBox(bboxStr string) ([]float64, error) {
 	for i, part := range bboxParts {
 		val, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid bbox value")
+			return nil, fmt.Errorf("invalid bbox value '%s': not a valid float", part)
 		}
 		bbox[i] = val
 	}
