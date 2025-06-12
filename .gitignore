@@ -16,6 +16,7 @@
 coverage.*
 *.coverprofile
 profile.cov
+test-reports
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -30,3 +31,8 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+__debug_*
+
+data/poi_uk.gpkg
+poi

@@ -1,0 +1,14 @@
+__pycache__
+.github
+.openapi-generator
+.vscode
+api
+archive
+data
+openapi-spec
+templates
+openapitools.json
+LICENSE.md
+README.md
+.env*
+docker-compose.yml
