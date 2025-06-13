@@ -99,7 +99,7 @@ func server(dbPath string, port int) {
 	if err = db.Ping(); err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	log.Printf("Connected to database: %s\n", dbPath)
+	log.Printf("connected to database: %s\n", dbPath)
 
 	r := gin.New()
 	r.Use(
