@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -80,16 +81,25 @@ func main() {
 
 func server(dbPath string, port int) {
 	var err error
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		log.Fatalf("database file does not exist: %s", dbPath)
+	}
+
 	db, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
-		panic(fmt.Sprintf("failed to open database: %v", err))
+		log.Fatalf("failed to open database: %v", err)
 	}
-	log.Printf("Connected to database: %s\n", dbPath)
+	
 	defer func() {
 		if err := db.Close(); err != nil {
 			log.Printf("error closing database: %v", err)
 		}
 	}()
+
+	if err = db.Ping(); err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	log.Printf("connected to database: %s\n", dbPath)
 
 	r := gin.New()
 	r.Use(
