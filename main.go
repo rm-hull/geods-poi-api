@@ -89,7 +89,7 @@ func server(dbPath string, port int) {
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
-	
+
 	defer func() {
 		if err := db.Close(); err != nil {
 			log.Printf("error closing database: %v", err)
@@ -125,8 +125,13 @@ func server(dbPath string, port int) {
 }
 
 func search(c *gin.Context) {
-	bboxStr := c.Query("bbox")
-	bbox, err := parseBBox(bboxStr)
+	bbox, err := parseBBox(c.Query("bbox"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	categories, err := parseCategories(c.Query("categories"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -189,7 +194,13 @@ func search(c *gin.Context) {
 			}
 		}
 
-		results = append(results, poi)
+		if len(categories) > 0 {
+			if hasCategoryMatch(poi.Categories, categories) {
+				results = append(results, poi)
+			}
+		} else {
+			results = append(results, poi)
+		}
 	}
 	if err = rows.Err(); err != nil {
 		log.Printf("error during rows iteration: %v", err)
@@ -241,4 +252,31 @@ func wkbPointToWKT(geomBytes []byte) (string, error) {
 	}
 
 	return wktString, nil
+}
+
+func parseCategories(categoriesStr string) ([]string, error) {
+	if categoriesStr == "" {
+		return nil, nil // No categories specified, return empty slice
+	}
+
+	categories := strings.Split(categoriesStr, ",")
+	for i, cat := range categories {
+		categories[i] = strings.TrimSpace(cat)
+		if categories[i] == "" {
+			return nil, fmt.Errorf("category cannot be an empty string")
+		}
+	}
+
+	return categories, nil
+}
+
+func hasCategoryMatch(items []string, categories []string) bool {
+	for _, cat := range categories {
+		for _, item := range items {
+			if strings.EqualFold(item, cat) {
+				return true
+			}
+		}
+	}
+	return false
 }
