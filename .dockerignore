@@ -1,14 +1,8 @@
-__pycache__
 .github
-.openapi-generator
 .vscode
-api
-archive
-data
-openapi-spec
-templates
-openapitools.json
+data/poi_uk.gpkg
 LICENSE.md
 README.md
+ATTRIBUTION.md
 .env*
 docker-compose.yml
