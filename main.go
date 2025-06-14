@@ -261,7 +261,7 @@ func parseCategories(categoriesStr string) (map[string]struct{}, error) {
 		if cat == "" {
 			return nil, fmt.Errorf("category cannot be an empty string")
 		}
-		categories[cat] = struct{}{}
+		categories[strings.ToLower(cat)] = struct{}{}
 	}
 
 	return categories, nil
