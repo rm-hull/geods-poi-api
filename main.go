@@ -194,11 +194,7 @@ func search(c *gin.Context) {
 			}
 		}
 
-		if len(categories) > 0 {
-			if hasCategoryMatch(poi.Categories, categories) {
-				results = append(results, poi)
-			}
-		} else {
+		if len(categories) == 0 || hasCategoryMatch(poi.Categories, categories) {
 			results = append(results, poi)
 		}
 	}
