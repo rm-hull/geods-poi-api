@@ -250,28 +250,27 @@ func wkbPointToWKT(geomBytes []byte) (string, error) {
 	return wktString, nil
 }
 
-func parseCategories(categoriesStr string) ([]string, error) {
+func parseCategories(categoriesStr string) (map[string]struct{}, error) {
 	if categoriesStr == "" {
-		return nil, nil // No categories specified, return empty slice
+		return nil, nil // No categories specified, return nil
 	}
 
-	categories := strings.Split(categoriesStr, ",")
-	for i, cat := range categories {
-		categories[i] = strings.TrimSpace(cat)
-		if categories[i] == "" {
+	categories := make(map[string]struct{})
+	for cat := range strings.SplitSeq(categoriesStr, ",") {
+		cat = strings.TrimSpace(cat)
+		if cat == "" {
 			return nil, fmt.Errorf("category cannot be an empty string")
 		}
+		categories[cat] = struct{}{}
 	}
 
 	return categories, nil
 }
 
-func hasCategoryMatch(items []string, categories []string) bool {
-	for _, cat := range categories {
-		for _, item := range items {
-			if strings.EqualFold(item, cat) {
-				return true
-			}
+func hasCategoryMatch(items []string, categories map[string]struct{}) bool {
+	for _, item := range items {
+		if _, exists := categories[item]; exists {
+			return true
 		}
 	}
 	return false
