@@ -35,4 +35,5 @@ go.work.sum
 __debug_*
 
 data/poi_uk.gpkg
+data/bak
 poi

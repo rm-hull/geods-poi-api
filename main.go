@@ -77,7 +77,7 @@ func server(dbPath string, port int) {
 		log.Fatalf("failed to initialize healthcheck: %v", err)
 	}
 
-	r.GET("/v1/poi/refdata", internal.RefData(db))
+	r.GET("/v1/poi/ref-data", internal.RefData(db))
 	r.GET("/v1/poi/search", internal.Search(db))
 	r.GET("/v1/poi/marker/:category", internal.Marker)
 
