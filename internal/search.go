@@ -14,8 +14,9 @@ import (
 	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
-type Response struct {
-	Results []POI `json:"results"`
+type SearchResponse struct {
+	Results     []POI    `json:"results"`
+	Attribution []string `json:"attribution"`
 }
 
 type POI struct {
@@ -63,14 +64,14 @@ func Search(db *sql.DB) func(c *gin.Context) {
 		// In bbox: [LEFT, BOTTOM, RIGHT, TOP]
 		// So: bbox[LEFT]=min long, bbox[BOTTOM]=min lat, bbox[RIGHT]=max long, bbox[TOP]=max lat
 		rows, err := db.Query(`
-		SELECT
-		  fid, geom, id, primary_name, main_category, alternate_category,
-		  address, locality, postcode, region, country, source, source_record_id,
-		  lat, long, h3_15, easting, northing, lsoa21cd
-		FROM poi_uk
-		WHERE lat BETWEEN ? AND ?
-		AND long BETWEEN ? AND ?
-		`,
+				SELECT
+				fid, geom, id, primary_name, main_category, alternate_category,
+				address, locality, postcode, region, country, source, source_record_id,
+				lat, long, h3_15, easting, northing, lsoa21cd
+				FROM poi_uk
+				WHERE lat BETWEEN ? AND ?
+				AND long BETWEEN ? AND ?
+			`,
 			bbox[BOTTOM], bbox[TOP], bbox[LEFT], bbox[RIGHT],
 		)
 		if err != nil {
@@ -88,9 +89,9 @@ func Search(db *sql.DB) func(c *gin.Context) {
 		var poi POI
 		var mainCategory sql.NullString
 		var alternateCategory sql.NullString
+		var geomBytes []byte
 
 		for rows.Next() {
-			var geomBytes []byte
 			if err := rows.Scan(&poi.Fid, &geomBytes, &poi.Id, &poi.PrimaryName, &mainCategory, &alternateCategory,
 				&poi.Address, &poi.Locality, &poi.Postcode, &poi.Region, &poi.Country, &poi.Source, &poi.SourceRecordId,
 				&poi.Lat, &poi.Long, &poi.H3_15, &poi.Easting, &poi.Northing, &poi.LSOA21CD); err != nil {
@@ -127,7 +128,10 @@ func Search(db *sql.DB) func(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, Response{Results: results})
+		c.JSON(http.StatusOK, SearchResponse{
+			Results:     results,
+			Attribution: ATTRIBUTION,
+		})
 	}
 }
 
