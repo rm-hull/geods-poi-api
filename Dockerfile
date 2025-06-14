@@ -28,6 +28,7 @@ RUN apk --no-cache add curl ca-certificates tzdata && \
 RUN adduser -D -g '' appuser
 WORKDIR /app
 
+COPY ./data/markers /app/data/markers
 COPY --from=build /app/poi .
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo

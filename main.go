@@ -16,6 +16,7 @@ import (
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
 	hc_config "github.com/tavsec/gin-healthcheck/config"
+	cachecontrol "go.eigsys.de/gin-cachecontrol/v2"
 )
 
 func main() {
@@ -65,6 +66,7 @@ func server(dbPath string, port int) {
 		gin.LoggerWithWriter(gin.DefaultWriter, "/healthz"),
 		gin.Recovery(),
 		compress.Compress(),
+		cachecontrol.New(cachecontrol.CacheAssetsForeverPreset),
 		cors.Default(),
 	)
 
@@ -75,10 +77,12 @@ func server(dbPath string, port int) {
 		log.Fatalf("failed to initialize healthcheck: %v", err)
 	}
 
+	r.GET("/v1/poi/refdata", internal.RefData(db))
 	r.GET("/v1/poi/search", internal.Search(db))
+	r.GET("/v1/poi/marker/:category", internal.Marker)
 
 	addr := fmt.Sprintf(":%d", port)
-	if err := r.Run(addr); err != nil {
-		panic(fmt.Sprintf("failed to start server: %v", err))
-	}
+	log.Printf("Starting HTTP API Server on port %d...", port)
+	err = r.Run(addr)
+	log.Fatalf("HTTP API Server failed to start on port %d: %v", port, err)
 }
