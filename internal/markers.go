@@ -27,7 +27,7 @@ func Marker(c *gin.Context) {
 	}
 
 	icon, exists := icons[category]
-	if !exists {
+	if icon == "" || !exists {
 		c.JSON(404, gin.H{"error": "category not found"})
 		return
 	}
