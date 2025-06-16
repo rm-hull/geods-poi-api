@@ -35,3 +35,8 @@ func Marker(c *gin.Context) {
 	c.Header("Content-Type", "image/png")
 	c.File("./data/markers/" + icon)
 }
+
+func Shadow(c *gin.Context) {
+	c.Header("Content-Type", "image/png")
+	c.File("./data/markers/_shadow.png")
+}

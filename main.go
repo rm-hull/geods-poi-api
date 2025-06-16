@@ -79,6 +79,7 @@ func server(dbPath string, port int) {
 
 	r.GET("/v1/poi/ref-data", internal.RefData(db))
 	r.GET("/v1/poi/search", internal.Search(db))
+	r.GET("/v1/poi/marker/shadow", internal.Shadow)
 	r.GET("/v1/poi/marker/:category", internal.Marker)
 
 	addr := fmt.Sprintf(":%d", port)
