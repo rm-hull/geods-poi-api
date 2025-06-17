@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"geods-poi-api/internal"
 	"log"
 	"os"
-	"poi-uk-api/internal"
 
 	"github.com/aurowora/compress"
 	"github.com/gin-contrib/cors"

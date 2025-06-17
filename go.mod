@@ -1,4 +1,4 @@
-module poi-uk-api
+module geods-poi-api
 
 go 1.24.4
 
