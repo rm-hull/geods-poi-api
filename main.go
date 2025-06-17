@@ -77,10 +77,10 @@ func server(dbPath string, port int) {
 		log.Fatalf("failed to initialize healthcheck: %v", err)
 	}
 
-	r.GET("/v1/poi/ref-data", internal.RefData(db))
-	r.GET("/v1/poi/search", internal.Search(db))
-	r.GET("/v1/poi/marker/shadow", internal.Shadow)
-	r.GET("/v1/poi/marker/:category", internal.Marker)
+	r.GET("/v1/geods-poi/ref-data", internal.RefData(db))
+	r.GET("/v1/geods-poi/search", internal.Search(db))
+	r.GET("/v1/geods-poi/marker/shadow", internal.Shadow)
+	r.GET("/v1/geods-poi/marker/:category", internal.Marker)
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)
