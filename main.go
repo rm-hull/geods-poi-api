@@ -26,7 +26,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "http",
-		Short: "POI UK API server",
+		Short: "GeoDS-POI API server",
 		Run: func(cmd *cobra.Command, args []string) {
 			server(dbPath, port)
 		},
