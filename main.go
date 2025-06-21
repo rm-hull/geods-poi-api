@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Depado/ginprom"
 	"github.com/aurowora/compress"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -62,12 +63,20 @@ func server(dbPath string, port int) {
 	log.Printf("connected to database: %s\n", dbPath)
 
 	r := gin.New()
+
+	prometheus := ginprom.New(
+		ginprom.Engine(r),
+		ginprom.Namespace("gps_routes"),
+		ginprom.Subsystem("api"),
+	)
+
 	r.Use(
 		gin.LoggerWithWriter(gin.DefaultWriter, "/healthz"),
 		gin.Recovery(),
 		compress.Compress(),
 		cachecontrol.New(cachecontrol.CacheAssetsForeverPreset),
 		cors.Default(),
+		prometheus.Instrument(),
 	)
 
 	err = healthcheck.New(r, hc_config.DefaultConfig(), []checks.Check{
