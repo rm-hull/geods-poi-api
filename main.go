@@ -68,15 +68,16 @@ func server(dbPath string, port int) {
 		ginprom.Engine(r),
 		ginprom.Namespace("gps_routes"),
 		ginprom.Subsystem("api"),
+		ginprom.Path("/metrics"),
 	)
 
 	r.Use(
-		gin.LoggerWithWriter(gin.DefaultWriter, "/healthz"),
 		gin.Recovery(),
+		gin.LoggerWithWriter(gin.DefaultWriter, "/healthz", "/metrics"),
+		prometheus.Instrument(),
 		compress.Compress(),
 		cachecontrol.New(cachecontrol.CacheAssetsForeverPreset),
 		cors.Default(),
-		prometheus.Instrument(),
 	)
 
 	err = healthcheck.New(r, hc_config.DefaultConfig(), []checks.Check{
