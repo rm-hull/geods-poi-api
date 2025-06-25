@@ -66,8 +66,6 @@ func server(dbPath string, port int) {
 
 	prometheus := ginprom.New(
 		ginprom.Engine(r),
-		ginprom.Namespace("geods_poi"),
-		ginprom.Subsystem("api"),
 		ginprom.Path("/metrics"),
 		ginprom.Ignore("/healthz"),
 	)
