@@ -29,6 +29,7 @@ type Photo struct {
 	Width          int        `json:"width"`
 	User           User       `json:"user"`
 }
+
 type URLs struct {
 	Full    string `json:"full"`
 	Raw     string `json:"raw"`
