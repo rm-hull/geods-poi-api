@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,7 +12,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/andybalholm/brotli"
 	"github.com/gin-gonic/gin"
+	"github.com/kofalt/go-memoize"
 )
 
 type Photo struct {
@@ -69,37 +73,43 @@ const UNSPLASH_API_URL = "https://api.unsplash.com/search/photos"
 
 var httpClient = &http.Client{}
 
-func Image(c *gin.Context) {
-	category := c.Param("category")
-	if category == "" {
-		c.JSON(400, gin.H{"error": "category is required"})
-		return
-	}
+func Image(cache *memoize.Memoizer) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		category := c.Param("category")
+		if category == "" {
+			c.JSON(400, gin.H{"error": "category is required"})
+			return
+		}
 
-	if _, exists := icons[category]; !exists {
-		c.JSON(404, gin.H{"error": "category not found"})
-		return
-	}
+		if _, exists := icons[category]; !exists {
+			c.JSON(404, gin.H{"error": "category not found"})
+			return
+		}
 
-	resp, err := fetch(c.Request.Context(), category)
-	if err != nil {
-		log.Printf("Error fetching image: %v", err)
-		c.JSON(500, gin.H{"error": "failed to fetch image"})
-		return
-	}
-	if len(resp.Results) == 0 {
-		c.JSON(404, gin.H{"error": "no image found for category"})
-		return
-	}
+		resp, err, _ := memoize.Call(cache, fmt.Sprintf("image/%s", category), func() (*Response, error) {
+			log.Printf("Fetching image for category: %s", category)
+			return fetch(c.Request.Context(), category)
+		})
 
-	c.JSON(200, gin.H{
-		"src": resp.Results[0].URLs.Small,
-		"alt": resp.Results[0].AltDescription,
-		"attribution": gin.H{
-			"name": resp.Results[0].User.Name,
-			"link": resp.Results[0].User.Links.HTML,
-		},
-	})
+		if err != nil {
+			log.Printf("Error fetching image: %v", err)
+			c.JSON(500, gin.H{"error": "failed to fetch image"})
+			return
+		}
+		if len(resp.Results) == 0 {
+			c.JSON(404, gin.H{"error": "no image found for category"})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"src": resp.Results[0].URLs.Small,
+			"alt": resp.Results[0].AltDescription,
+			"attribution": gin.H{
+				"name": resp.Results[0].User.Name,
+				"link": resp.Results[0].User.Links.HTML,
+			},
+		})
+	}
 }
 
 func fetch(ctx context.Context, category string) (*Response, error) {
@@ -116,6 +126,9 @@ func fetch(ctx context.Context, category string) (*Response, error) {
 	q.Add("order_by", "relevant")
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Authorization", "Client-ID "+os.Getenv("UNSPLASH_ACCESS_KEY"))
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip,br,deflate")
+	req.Header.Set("User-Agent", "https://github.com/rm-hull/geods-poi-api")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -127,7 +140,31 @@ func fetch(ctx context.Context, category string) (*Response, error) {
 		}
 	}()
 
-	body, err := io.ReadAll(resp.Body)
+	var reader io.Reader = resp.Body
+	switch resp.Header.Get("Content-Encoding") {
+	case "br":
+		reader = brotli.NewReader(resp.Body)
+	case "gzip":
+		reader, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("error creating gzip reader: %w", err)
+		}
+		defer func() {
+			if err := reader.(*gzip.Reader).Close(); err != nil {
+				log.Printf("Error closing gzip reader: %v", err)
+			}
+		}()
+	case "deflate":
+		reader = flate.NewReader(resp.Body)
+		defer reader.(io.ReadCloser).Close()
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				log.Printf("Error closing deflate reader: %v", err)
+			}
+		}()
+	}
+
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("error reading response body: %w", err)
 	}

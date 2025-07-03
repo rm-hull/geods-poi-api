@@ -6,12 +6,14 @@ import (
 	"geods-poi-api/internal"
 	"log"
 	"os"
+	"time"
 
 	"github.com/Depado/ginprom"
 	"github.com/aurowora/compress"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/kofalt/go-memoize"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
 
@@ -92,11 +94,13 @@ func server(dbPath string, port int) {
 		log.Fatalf("failed to initialize healthcheck: %v", err)
 	}
 
+	cache := memoize.NewMemoizer(10*24*time.Hour, 6*time.Hour)
+
 	r.GET("/v1/geods-poi/ref-data", internal.RefData(db))
 	r.GET("/v1/geods-poi/search", internal.Search(db))
 	r.GET("/v1/geods-poi/marker/shadow", internal.Shadow)
 	r.GET("/v1/geods-poi/marker/:category", internal.Marker)
-	r.GET("/v1/geods-poi/image/:category", internal.Image)
+	r.GET("/v1/geods-poi/image/:category", internal.Image(cache))
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)
