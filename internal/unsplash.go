@@ -156,7 +156,6 @@ func fetch(ctx context.Context, category string) (*Response, error) {
 		}()
 	case "deflate":
 		reader = flate.NewReader(resp.Body)
-		defer reader.(io.ReadCloser).Close()
 		defer func() {
 			if err := reader.(io.ReadCloser).Close(); err != nil {
 				log.Printf("Error closing deflate reader: %v", err)
