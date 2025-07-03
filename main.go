@@ -11,6 +11,7 @@ import (
 	"github.com/aurowora/compress"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
 
@@ -24,6 +25,11 @@ func main() {
 	var err error
 	var dbPath string
 	var port int
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
+	internal.EnvironmentVars()
 
 	rootCmd := &cobra.Command{
 		Use:   "http",
@@ -90,6 +96,7 @@ func server(dbPath string, port int) {
 	r.GET("/v1/geods-poi/search", internal.Search(db))
 	r.GET("/v1/geods-poi/marker/shadow", internal.Shadow)
 	r.GET("/v1/geods-poi/marker/:category", internal.Marker)
+	r.GET("/v1/geods-poi/image/:category", internal.Image)
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)
