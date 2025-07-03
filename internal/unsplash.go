@@ -67,6 +67,8 @@ type Response struct {
 
 const UNSPLASH_API_URL = "https://api.unsplash.com/search/photos"
 
+var httpClient = &http.Client{}
+
 func Image(c *gin.Context) {
 	category := c.Param("category")
 	if category == "" {
@@ -115,8 +117,7 @@ func fetch(ctx context.Context, category string) (*Response, error) {
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Authorization", "Client-ID "+os.Getenv("UNSPLASH_ACCESS_KEY"))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)
 	}
