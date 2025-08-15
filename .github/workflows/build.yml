@@ -19,32 +19,28 @@ jobs:
       pull-requests: write
       checks: write
 
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
-
     steps:
       - uses: actions/checkout@v5
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
 
-      - name: Install testcontainers dependencies
-        run: docker --version
-
-      - name: Cache Docker images
+      - name: Cache Go modules & tools
         uses: actions/cache@v4
         with:
-          path: /var/lib/docker
-          key: ${{ runner.os }}-docker-${{ hashFiles('**/go.sum') }}
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/go/bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-docker-
+            ${{ runner.os }}-go-
 
       - name: Test
         run: |
+          export PATH=$(go env GOPATH)/bin:$PATH
           go install gotest.tools/gotestsum@latest
           mkdir -p ./test-reports/
           gotestsum --junitfile=./test-reports/junit.xml --format github-actions -- -v -coverprofile=profile.cov -coverpkg=./... ./...

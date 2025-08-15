@@ -1,6 +1,6 @@
 module geods-poi-api
 
-go 1.24.4
+go 1.25
 
 require (
 	github.com/Depado/ginprom v1.8.1
