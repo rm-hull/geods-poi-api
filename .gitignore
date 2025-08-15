@@ -36,4 +36,4 @@ __debug_*
 
 data/poi_uk.gpkg
 data/bak
-poi
+geods-poi*
