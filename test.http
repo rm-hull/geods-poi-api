@@ -1,0 +1,17 @@
+### Category groups
+GET http://localhost:8080/v1/geods-poi/category-groups
+
+### Reference data
+GET http://localhost:8080/v1/geods-poi/ref-data
+
+### Search
+GET http://localhost:8080/v1/geods-poi/search?bbox=-1.6339,54.9679,-1.5985,54.9891
+
+### Search for specific categories
+GET http://localhost:8080/v1/geods-poi/search?bbox=-1.6339,54.9679,-1.5985,54.9891&categories=bar,music_venue
+
+### Metrics
+GET http://localhost:8080/metrics
+
+### Health
+GET http://localhost:8080/healthz

@@ -97,6 +97,7 @@ func server(dbPath string, port int) {
 	cache := memoize.NewMemoizer(10*24*time.Hour, 6*time.Hour)
 
 	r.GET("/v1/geods-poi/ref-data", internal.RefData(db))
+	r.GET("/v1/geods-poi/category-groups", internal.CategoryGroups)
 	r.GET("/v1/geods-poi/search", internal.Search(db))
 	r.GET("/v1/geods-poi/marker/shadow", internal.Shadow)
 	r.GET("/v1/geods-poi/marker/:category", internal.Marker)

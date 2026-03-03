@@ -47,7 +47,7 @@ const (
 	TOP
 )
 
-func Search(db *sql.DB) func(c *gin.Context) {
+func Search(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bbox, err := parseBBox(c.Query("bbox"))
 		if err != nil {
