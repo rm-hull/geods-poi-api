@@ -17,7 +17,7 @@ type RefDataResponse struct {
 	Attribution []string       `json:"attribution"`
 }
 
-func RefData(db *sql.DB) func(c *gin.Context) {
+func RefData(db *sql.DB) gin.HandlerFunc {
 	categories, count, err := precomputeCategories(db)
 	if err != nil {
 		log.Fatalf("error pre-computing categories: %v", err)
@@ -36,6 +36,11 @@ func RefData(db *sql.DB) func(c *gin.Context) {
 			Attribution: ATTRIBUTION,
 		})
 	}
+}
+
+func CategoryGroups(c *gin.Context) {
+	c.Header("Content-Type", "application/json")
+	c.File("./data/category-groups.json")
 }
 
 func retrieveLastUpdated(db *sql.DB) (string, error) {
